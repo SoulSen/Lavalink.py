@@ -9,7 +9,7 @@ import aiohttp
 
 from .events import Event
 from .exceptions import NodeException, Unauthorized
-from .models import DefaultPlayer
+from .models import BasicPlayer, AudioTrack
 from .node import Node
 from .nodemanager import NodeManager
 from .playermanager import PlayerManager
@@ -28,7 +28,7 @@ class Client:
     shard_count: Optional[:class:`int`]
         The amount of shards your bot has. Defaults to `1`.
     player: Optional[:class:`BasePlayer`]
-        The class that should be used for the player. Defaults to ``DefaultPlayer``.
+        The class that should be used for the player. Defaults to ``BasicPlayer``.
         Do not change this unless you know what you are doing!
     regions: Optional[:class:`dict`]
         A dictionary representing region -> discord endpoint. You should only
@@ -56,7 +56,7 @@ class Client:
     _event_hooks = defaultdict(list)
 
     def __init__(self, user_id: int, shard_count: int = 1,
-                 player=DefaultPlayer, regions: dict = None, connect_back: bool = False):
+                 player=BasicPlayer, regions: dict = None, connect_back: bool = False):
         if not isinstance(user_id, int):
             raise TypeError('user_id must be an int (got {}). If the type is None, '
                             'ensure your bot has fired "on_ready" before instantiating '
@@ -126,6 +126,7 @@ class Client:
         """
         if not self.node_manager.available_nodes:
             raise NodeException('No available nodes!')
+
         node = node or random.choice(self.node_manager.available_nodes)
         destination = 'http://{}:{}/loadtracks?identifier={}'.format(node.host, node.port, quote(query))
         headers = {
@@ -134,7 +135,9 @@ class Client:
 
         async with self._session.get(destination, headers=headers) as res:
             if res.status == 200:
-                return await res.json()
+                response = await res.json()
+
+                return [AudioTrack(track['info'], None) for track in response['tracks']]
 
             if res.status == 401 or res.status == 403:
                 raise Unauthorized
@@ -159,6 +162,7 @@ class Client:
         """
         if not self.node_manager.available_nodes:
             raise NodeException('No available nodes!')
+
         node = node or random.choice(self.node_manager.available_nodes)
         destination = 'http://{}:{}/decodetrack?track={}'.format(node.host, node.port, track)
         headers = {
@@ -167,7 +171,9 @@ class Client:
 
         async with self._session.get(destination, headers=headers) as res:
             if res.status == 200:
-                return await res.json()
+                response = await res.json()
+
+                return AudioTrack(response['info'], None)
 
             if res.status == 401 or res.status == 403:
                 raise Unauthorized
@@ -192,6 +198,7 @@ class Client:
         """
         if not self.node_manager.available_nodes:
             raise NodeException('No available nodes!')
+
         node = node or random.choice(self.node_manager.available_nodes)
         destination = 'http://{}:{}/decodetracks'.format(node.host, node.port)
         headers = {
@@ -200,7 +207,9 @@ class Client:
 
         async with self._session.post(destination, headers=headers, json=tracks) as res:
             if res.status == 200:
-                return await res.json()
+                response = await res.json()
+
+                return [AudioTrack(track['info'], None) for track in response['tracks']]
 
             if res.status == 401 or res.status == 403:
                 raise Unauthorized

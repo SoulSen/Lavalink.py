@@ -60,7 +60,7 @@ class PlayerManager:
 
         if player.node and player.node.available:
             await player.node._send(op='destroy', guildId=player.guild_id)
-            player.cleanup()
+            await player.cleanup()
 
         self._lavalink._logger.info(
             '[NODE-{}] Successfully destroyed its player'.format(player.node.name))

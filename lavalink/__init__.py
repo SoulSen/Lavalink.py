@@ -13,7 +13,7 @@ import sys
 
 from .events import Event, TrackStartEvent, TrackStuckEvent, TrackExceptionEvent, TrackEndEvent, QueueEndEvent, \
     NodeConnectedEvent, NodeChangedEvent, NodeDisconnectedEvent, WebSocketClosedEvent
-from .models import BasePlayer, DefaultPlayer, AudioTrack
+from .models import BasePlayer, AudioTrack
 from .utils import format_time, parse_time, decode_track
 from .client import Client
 from .playermanager import PlayerManager
@@ -32,7 +32,7 @@ def enable_debug_logging():
     log = logging.getLogger('lavalink')
 
     fmt = logging.Formatter(
-        '[%(asctime)s] [lavalink.py] [%(levelname)s] %(message)s',
+        '[%(asctime)s] [lavalink.py {}] [%(levelname)s] %(message)s'.format(__version__),
         datefmt="%H:%M:%S"
     )
 
